@@ -3,7 +3,7 @@
 import { test, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile, readdir, stat } from 'node:fs/promises';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 
 import { build } from '../scripts/build.mjs';
 import { LANGS, pagePath, routes } from '../src/util.mjs';
@@ -46,12 +46,16 @@ test('pages declare language, title, description and exactly one h1', () => {
   }
 });
 
+function localLinks(html) {
+  return [...html.matchAll(/(?:href|src)="([^"#?:]*)(?:[#?][^"]*)?"/g)].map((m) => m[1]).filter((u) => u && !u.startsWith('//'));
+}
+
 test('internal links and assets resolve', async () => {
   for (const [file, html] of pages) {
-    for (const [, url] of html.matchAll(/(?:href|src)="(\/[^"#?]*)/g)) {
-      const target = join(dist, url);
+    for (const url of localLinks(html)) {
+      const target = url.startsWith('/') ? join(dist, url) : join(dist, dirname(file), url);
       const exists = await stat(url.endsWith('/') ? join(target, 'index.html') : target).then(
-        () => true,
+        (s) => s.isFile() || url.endsWith('/'),
         () => false,
       );
       assert.ok(exists, `${file} links to missing ${url}`);
@@ -70,7 +74,8 @@ test('legal pages and cookie settings are reachable from every page', () => {
   for (const [file, html] of pages) {
     const lang = file.startsWith('/en/') ? 'en' : 'bg';
     for (const key of ['privacy', 'cookies', 'terms', 'accessibility', 'legal', 'rights']) {
-      assert.ok(html.includes(`href="${pagePath(lang, key)}"`), `${file} lacks a link to ${key}`);
+      const linked = localLinks(html).some((u) => !u.startsWith('/') && join(dirname(file), u).replace(/\/?$/, '/') === pagePath(lang, key));
+      assert.ok(file === '/404.html' || linked, `${file} lacks a link to ${key}`);
     }
     assert.ok(html.includes('data-consent-open'), `${file} lacks cookie settings`);
   }

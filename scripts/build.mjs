@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { site } from '../src/config.mjs';
 import { layout } from '../src/layout.mjs';
 import { ui } from '../src/ui.mjs';
-import { LANGS, absolute, href, pagePath, routes } from '../src/util.mjs';
+import { LANGS, absolute, href, pagePath, routes, setCurrentPage } from '../src/util.mjs';
 
 import home from '../src/pages/home.mjs';
 import services from '../src/pages/services.mjs';
@@ -99,11 +99,13 @@ export async function build() {
   }
   for (const page of pages) {
     for (const lang of LANGS) {
+      setCurrentPage(pagePath(lang, page.key));
       const { title, description, body } = page.render(lang);
       const html = layout({ lang, key: page.key, title, description, body });
       await write(join(pagePath(lang, page.key), 'index.html'), html);
     }
   }
+  setCurrentPage(null);
   await write('404.html', notFound());
   await write('sitemap.xml', sitemap());
   await write('robots.txt', `User-agent: *\nAllow: /\n\nSitemap: ${site.url.replace(/\/$/, '')}/sitemap.xml\n`);

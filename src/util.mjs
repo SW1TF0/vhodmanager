@@ -25,13 +25,31 @@ export function pagePath(lang, key) {
   return slug ? `${prefix}${slug}/` : prefix;
 }
 
-/** Link to a page or asset, including the base path. */
+// Links are written relative to the page being rendered, so the built site works
+// at any address (custom domain, GitHub Pages sub-folder) and when opened from disk.
+// The 404 page can be served at any depth, so it uses root-relative links instead.
+let currentDir = null;
+
+/** Set the page being rendered (site-relative directory), or null for root-relative links. */
+export function setCurrentPage(dir) {
+  currentDir = dir;
+}
+
+function link(target) {
+  // FILE_LINKS=1 points directory links at index.html so pages open with a double click.
+  const file = process.env.FILE_LINKS === '1' && target.endsWith('/') ? `${target}index.html` : target;
+  if (currentDir === null) return site.basePath + file;
+  const depth = currentDir.split('/').filter(Boolean).length;
+  return '../'.repeat(depth) + file.slice(1) || './';
+}
+
+/** Link to a page. */
 export function href(lang, key) {
-  return site.basePath + pagePath(lang, key);
+  return link(pagePath(lang, key));
 }
 
 export function asset(path) {
-  return `${site.basePath}/${path.replace(/^\//, '')}`;
+  return link(`/${path.replace(/^\//, '')}`);
 }
 
 export function absolute(lang, key) {

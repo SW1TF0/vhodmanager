@@ -2,7 +2,7 @@
   "name": "vhodmanager-site",
   "version": "1.0.0",
   "private": true,
-  "description": "Website of Vhodmanager (Вход мениджър) – professional condominium management in Bulgaria.",
+  "description": "Website of Vhodmanager (\u0412\u0445\u043e\u0434 \u043c\u0435\u043d\u0438\u0434\u0436\u044a\u0440) \u2013 professional condominium management in Bulgaria.",
   "type": "module",
   "engines": {
     "node": ">=20"
@@ -15,7 +15,8 @@
     "test:unit": "node --test tests/site.test.mjs",
     "test:a11y": "node --test tests/browser.test.mjs",
     "test": "npm run build && npm run validate && npm run test:unit && npm run test:a11y",
-    "placeholders": "node scripts/placeholders.mjs"
+    "placeholders": "node scripts/placeholders.mjs",
+    "build:offline": "FILE_LINKS=1 node scripts/build.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.13.0",
