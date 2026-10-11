@@ -75,11 +75,14 @@ test('consent banner is shown first and "reject" keeps third parties blocked', a
 });
 
 test('accepting loads the map, withdrawing via settings removes it', async () => {
-  const { page, context, external } = await newPage();
+  const { page, context } = await newPage();
   await page.goto(`${base}/en/contact/`);
+  await page.locator('.map').scrollIntoViewIfNeeded();
+  const mapRequest = page.waitForRequest((r) => r.url().startsWith('https://www.openstreetmap.org/'));
   await page.click('[data-consent-accept]');
   await page.locator('.map iframe').waitFor();
-  assert.ok(external.some((u) => u.startsWith('https://www.openstreetmap.org/')));
+  // Resolves once the browser asks OpenStreetMap for the map.
+  await mapRequest;
 
   await page.click('footer [data-consent-open]');
   const dialog = page.locator('#consent-dialog');
